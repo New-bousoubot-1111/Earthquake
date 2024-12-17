@@ -25,22 +25,6 @@ class owners(commands.Cog):
     print(Fore.BLUE + "|owner         |" + Fore.RESET)
     global start_time
     start_time = time.time()
-    
-  #リロード
-  @nextcord.slash_command(description="[file name]\nリロードをする")
-  async def reload(self,ctx,extension):
-    if ctx.user.id in config['owners']:
-      try:
-        self.bot.unload_extension(f'modules.{extension}')
-        self.bot.load_extension(f'modules.{extension}')
-        embed=nextcord.Embed(title="**reload**", description=f"**{extension}**をリロードしました",color=color)
-        await ctx.send(embed=embed,ephemeral=True)
-      except:
-        embed = nextcord.Embed(title="ファイルが見つかりません",color=0xff0000)
-        await ctx.send(embed=embed,ephemeral=True)
-    else:
-      embed=util.creator_only()
-      await ctx.send(embed=embed,ephemeral=True)
 
   #再起動
   @nextcord.slash_command(description="再起動をする")
@@ -93,29 +77,6 @@ class owners(commands.Cog):
     if ctx.user.guild_permissions.administrator:
       em=nextcord.Embed(title="削除", description="全てのメッセージを削除しました",color=0x08e2b7)
       await ctx.channel.purge(limit=None)
-      await ctx.send(embed=em)
-    else:
-      em=nextcord.Embed(title="Error", description="このコマンドは管理者専用です",color=0xff0000)
-      await ctx.send(embed=em)
-
-  #kick
-  @nextcord.slash_command(description="ユーザーをkickします")
-  async def kick(self, ctx,member :  nextcord.Member=nextcord.SlashOption(name="ユーザー名",description="ユーザー名を書いて下さい"), *, reason=None):
-    if ctx.user.guild_permissions.administrator:
-      await member.kick(reason=reason)
-      em=nextcord.Embed(title=f'{member}をサーバーからkickしました',color=0x08e2b7)
-      em.add_field(name=f'理由',value=reason)
-      await ctx.send(embed=em)
-    else:
-      em=nextcord.Embed(title="Error", description="このコマンドは管理者専用です。",color=0xff0000)
-      await ctx.send(embed=em)
-  #ban
-  @nextcord.slash_command(description="ユーザーをbanします")
-  async def ban(self, ctx, member : nextcord.Member=nextcord.SlashOption(name="ユーザー名",description="ユーザー名を書いて下さい"), *, reason=None):
-    if ctx.user.guild_permissions.administrator:
-      await member.ban(reason=reason)
-      em=nextcord.Embed(title=f'{member}をサーバーからbanしました',color=0x08e2b7)
-      em.add_field(name=f'理由',value=reason)
       await ctx.send(embed=em)
     else:
       em=nextcord.Embed(title="Error", description="このコマンドは管理者専用です",color=0xff0000)
