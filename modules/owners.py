@@ -57,30 +57,5 @@ class owners(commands.Cog):
         embed=util.creator_only()
         await ctx.send(embed=embed,ephemeral=True)
 
-  #メッセージ削除(指定)
-  @nextcord.slash_command(description="指定してメッセージを削除します")
-  async def clear(self, ctx, amount : int=nextcord.SlashOption(name="数値",description="削除したい数を書いて下さい")):
-    em=nextcord.Embed(title="メッセージを削除しています",color=0x08e2b7)
-    await ctx.send(embed=em)
-    if ctx.user.guild_permissions.administrator:
-      em=nextcord.Embed(title="削除", description=f"{amount}件のメッセージを削除しました",color=0x08e2b7)
-      await ctx.channel.purge(limit=amount)
-      await ctx.send(embed=em)
-    else:
-      em=nextcord.Embed(title="Error", description="このコマンドは管理者専用です",color=0xff0000)
-      await ctx.send(embed=em)
-  #メッセージ削除(全て)
-  @nextcord.slash_command(description="全てのメッセージを削除します")
-  async def clear_all(self, ctx):
-    em=nextcord.Embed(title="メッセージを削除しています",color=0x08e2b7)
-    await ctx.send(embed=em)
-    if ctx.user.guild_permissions.administrator:
-      em=nextcord.Embed(title="削除", description="全てのメッセージを削除しました",color=0x08e2b7)
-      await ctx.channel.purge(limit=None)
-      await ctx.send(embed=em)
-    else:
-      em=nextcord.Embed(title="Error", description="このコマンドは管理者専用です",color=0xff0000)
-      await ctx.send(embed=em)
-
 def setup(bot):
   return bot.add_cog(owners(bot))
