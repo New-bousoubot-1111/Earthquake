@@ -2,9 +2,6 @@
   "color": "0x00ffee",
   "owners": [800255014463078462],
   "modules": ["command","earthquake","owners","tsunami"],
-  "user_role": "1041002647827791932",
   "errorlog": "1041001428170326138",
-  "welcome_channel": "1041000630526951529",
-  "eew_channel": "1041004690378338375",
-  "news_channel": "1192172054921891951"
+  "eew_channel": "1041004690378338375"
 }
