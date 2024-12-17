@@ -26,13 +26,6 @@ class command(commands.Cog):
   async def on_ready(self):
     print(Fore.BLUE + "|command       |" + Fore.RESET)
 
-#普通
-  #ping
-  @nextcord.slash_command(description="応答速度を表示します")
-  async def ping(self,ctx):
-    embed=nextcord.Embed(title="ping", description=f"BOTのpingは**{round(self.bot.latency *1000)}**です。",color=color)
-    await ctx.send(embed=embed)
-
   #eew
   @nextcord.slash_command(description="地震情報を表示します")
   async def eew(self,ctx):
@@ -77,26 +70,6 @@ class command(commands.Cog):
 
     embed2=nextcord.Embed(title="コマンド",description=f"***{commands_list}***",color=color)
     await ctx.send(embed=embed,view=util.help_page(embed,embed2))
-    
-#メッセージ展開
-  @nextcord.slash_command(description="メッセージを展開できる")
-  async def message_open(self,ctx,message_url=nextcord.SlashOption(name="メッセージリンク",description="展開したいメッセージのメッセージリンク")):
-    await url.message_open(ctx,message_url,ctx.guild,ctx.channel,self.bot)
-
-  @nextcord.slash_command(description="翻訳できる")
-  async def translate(self,ctx, *, message=nextcord.SlashOption(name="message",description="メッセージ/messageを書いて下さい")):
-    if is_japanese(message):
-        lang = "EN-US"
-    else:
-        lang = "JA"
-    
-    translator = deepl.Translator("bb3b8bbd-7bc3-9431-17db-407ec264b66c:fx")
-    result = translator.translate_text(message, target_lang=lang)
-    result_txt = result.text
-
-    embed = nextcord.Embed(description=result_txt, color=nextcord.Colour.from_rgb(130, 219, 216))
-
-    await ctx.send(embed=embed)
 
 def setup(bot):
     return bot.add_cog(command(bot))
