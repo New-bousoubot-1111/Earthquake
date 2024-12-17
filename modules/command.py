@@ -5,8 +5,6 @@ import json
 from colorama import Fore
 import util
 import re
-import url
-import deepl
 
 with open('json/config.json', 'r') as f:
     config = json.load(f)
