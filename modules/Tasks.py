@@ -10,6 +10,9 @@ import sys
 import traceback
 import logging
 
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
 log = logger('tasks')
 
 with open('json/eew.toml','rb') as f:
