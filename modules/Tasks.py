@@ -100,7 +100,7 @@ class Tasks(commands.Cog):
                   color=sindo_data['color']
                 )
                 embed.set_footer(text='Provided by p2pquake.net')
-                await self.bot.get_channel(1212917173878788126).send(embed=embed)
+                await self.bot.get_channel(1316288751479033856).send(embed=embed)
           except websockets.ConnectionClosed:
             log.info('P2P地震情報WebSocketAPIとの接続が終了しました。再接続しています。')
             continue
