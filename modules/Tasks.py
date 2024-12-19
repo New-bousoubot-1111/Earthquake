@@ -9,9 +9,8 @@ import os
 import sys
 import traceback
 import logging
-import colors
 
-log = logger('Ao1Bot.cogs.tasks')
+log = logger('tasks')
 
 with open('json/eew.toml','rb') as f:
   config = tomllib.load(f)
