@@ -11,9 +11,7 @@ import traceback
 import logging
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
-
-log = logger('tasks')
+log = logging.getLogger('tasks')
 
 with open('json/eew.toml','rb') as f:
   config = tomllib.load(f)
