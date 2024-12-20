@@ -60,7 +60,7 @@ class Test(commands.Cog):
                 'time': '2024/12/20 10:00:00',
                 'maxScale': 40,
                 'hypocenter': {
-                    'name': 'テスト',
+                    'name': '',
                     'latitude': -200,
                     'longitude': -200,
                     'depth': 0,
@@ -92,7 +92,7 @@ class Test(commands.Cog):
             hypocenter_name = hypocenter['name']
 
         # Embedの作成
-        description = f'''<t:{time}:F>頃、{sindo_data["title"]}の地震がありました。'''
+        description = f'{time}頃、{sindo_data["title"]}の地震がありました。'
         if not hypocenter_name:
             description += "\n震源地は現在調査中です。"
 
