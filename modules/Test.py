@@ -103,9 +103,9 @@ class Test(commands.Cog):
 
                 # 津波情報のメッセージを設定
                 if domestic_tsunami == 'None':
-                    tsunami_message = '津波の心配はありません。'
+                    tsunami_message = 'この地震による津波の心配はありません。'
                 elif domestic_tsunami == 'Checking':
-                    tsunami_message = '津波の情報は調査中です。'
+                    tsunami_message = '津波の有無は現在調査中です。'
                 else:
                     tsunami_message = f"津波: {domestic_tsunami}"
 
@@ -127,10 +127,9 @@ class Test(commands.Cog):
 
                 # 震源地がわかる場合のみフィールドを追加
                 if hypocenter_name:
-                    embed.add_field(name="震源地", value=f"{hypocenter_name}{longitude_and_latitude}", inline=False)
+                    embed.add_field(name="震源地", value=hypocenter_name, inline=False)
                 embed.add_field(name="マグニチュード", value=hypocenter["magnitude"], inline=False)
                 embed.add_field(name="震源の深さ", value=depth, inline=False)
-                embed.set_footer(text='Provided by p2pquake.net')
                 await self.bot.get_channel(1316288751479033856).send(embed=embed)
           except websockets.ConnectionClosed:
             log.info('P2P地震情報WebSocketAPIとの接続が終了しました。再接続しています。')
