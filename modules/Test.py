@@ -11,7 +11,7 @@ import traceback
 import logging
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger('tasks')
+log = logging.getLogger('Test')
 
 with open('json/eew.toml','rb') as f:
   config = tomllib.load(f)
@@ -134,9 +134,14 @@ class Test(commands.Cog):
           except websockets.ConnectionClosed:
             log.info('P2P地震情報WebSocketAPIとの接続が終了しました。再接続しています。')
             continue
+          except asyncio.CancelledError:
+            log.info('タスクがキャンセルされました。終了します。')
+            break
           except:
             log.error(f'処理中にエラーが発生しました。\n{traceback.format_exc()}')
             pass
+    except asyncio.CancelledError:
+      log.info('タスクがキャンセルされました。終了します。')
     except:
       log.error(traceback.format_exc())
 
