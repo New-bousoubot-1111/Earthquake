@@ -7,6 +7,8 @@ import os
 import webserver
 import util
 import subprocess
+import sys
+import asyncio
 
 try:
     # pip3 uninstall discord.py を実行
@@ -19,6 +21,7 @@ with open('json/config.json', 'r') as f:
     config = json.load(f)
 
 color = nextcord.Colour(int(config['color'],16))
+CHANNEL_ID = 1073233143412301927
 
 intents = nextcord.Intents.all()
 intents.members = True
@@ -59,6 +62,38 @@ async def on_application_command_error(ctx, error:Exception):
             f.write(error2)
         print(Fore.RED + f"[Error]{error2}" + Fore.RESET)
 
+
+# エラー通知を送信する関数
+async def send_error_message(error_message):
+    channel = bot.get_channel(CHANNEL_ID)  # チャンネルIDを指定
+    if channel:  # チャンネルが正しく取得できた場合のみメッセージ送信
+        await channel.send(f"Bot Crashed/Error/Disconnected:\n{error_message}")
+    else:
+        print("Error: Invalid channel ID.")
+
+# on_errorイベント: エラーが発生したときに通知
+@bot.event
+async def on_error(event, *args, **kwargs):
+    error_message = f"An error occurred in {event}:\n"
+    error_message += ''.join(traceback.format_exception(*sys.exc_info()))
+    await send_error_message(error_message)
+
+# on_disconnectイベント: Botがオフラインになったときに通知
+@bot.event
+async def on_disconnect():
+    error_message = "Bot has been disconnected and is now offline."
+    await send_error_message(error_message)
+
+# sys.excepthookのカスタマイズ: クラッシュ時に通知
+def handle_exception(exc_type, exc_value, exc_tb):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_tb)
+    else:
+        error_message = ''.join(traceback.format_exception(exc_type, exc_value, exc_tb))
+        asyncio.run(send_error_message(error_message))
+
+# sys.excepthookにハンドラーをセット
+sys.excepthook = handle_exception
 
 webserver.start()
 try:
