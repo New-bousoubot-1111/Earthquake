@@ -8,6 +8,49 @@ class Test(commands.Cog):
         self.bot = bot
         self.previous_hypocenter = None  # 前回の震源地情報を保持
 
+sindoMap = {
+  -1: {
+    'title': '不明',
+    'color': 0x000000
+  },
+  10: {
+    'title': '震度1',
+    'color': 0xf2f2ff
+  },
+  20: {
+    'title': '震度2',
+    'color': 0x00aaff
+  },
+  30: {
+    'title': '震度3',
+    'color': 0x0040ff
+  },
+  40: {
+    'title': '震度4',
+    'color': 0xfae696
+  },
+  50: {
+    'title': '震度5弱',
+    'color': 0xffe600
+  },
+  55: {
+    'title': '震度5強',
+    'color': 0xff9900
+  },
+  60: {
+    'title': '震度6弱',
+    'color': 0xff2600
+  },
+  65: {
+    'title': '震度6強',
+    'color': 0xa50021
+  },
+  70: {
+    'title': '震度7',
+    'color': 0xb40069
+  }
+}
+
     @nextcord.slash_command(description="地震情報のテストを送信します")
     async def test_eew(self, interaction: nextcord.Interaction):
         """スラッシュコマンドでテスト地震情報を送信"""
