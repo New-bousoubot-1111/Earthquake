@@ -74,7 +74,7 @@ class Test(commands.Cog):
     async def handle_eew_data(self, data, channel_id):
         """地震情報を処理して送信"""
         sindo_data = sindoMap[data['earthquake']['maxScale']]
-        time = datetime.datetime.strptime(data['earthquake']['time'], '%Y/%m/%d %H:%M:%S').timestamp()
+        time = int(datetime.datetime.strptime(data['earthquake']['time'], '%d日 %H時%M分').timestamp())  # 整数化
         hypocenter = data['earthquake']['hypocenter']
         longitude_and_latitude = ''
         if hypocenter['latitude'] != -200 and hypocenter['longitude'] != -200:
