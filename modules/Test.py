@@ -9,39 +9,39 @@ sindoMap = {
     'color': 0x000000
   },
   10: {
-    'title': '震度1',
+    'title': '最大震度1',
     'color': 0xf2f2ff
   },
   20: {
-    'title': '震度2',
+    'title': '最大震度2',
     'color': 0x00aaff
   },
   30: {
-    'title': '震度3',
+    'title': '最大震度3',
     'color': 0x0040ff
   },
   40: {
-    'title': '震度4',
+    'title': '最大震度4',
     'color': 0xfae696
   },
   50: {
-    'title': '震度5弱',
+    'title': '最大震度5弱',
     'color': 0xffe600
   },
   55: {
-    'title': '震度5強',
+    'title': '最大震度5強',
     'color': 0xff9900
   },
   60: {
-    'title': '震度6弱',
+    'title': '最大震度6弱',
     'color': 0xff2600
   },
   65: {
-    'title': '震度6強',
+    'title': '最大震度6強',
     'color': 0xa50021
   },
   70: {
-    'title': '震度7',
+    'title': '最大震度7',
     'color': 0xb40069
   }
 }
@@ -94,9 +94,10 @@ class Test(commands.Cog):
         if hypocenter_name != self.previous_hypocenter:
             embed = nextcord.Embed(
                 title='地震情報',
-                description=f'''<t:{time}:F>頃地震がありました。
-                震源地は、{hypocenter_name}{longitude_and_latitude}で、最大深度は{sindo_data["title"]}、震源の深さは{depth}、マグニチュードは{hypocenter["magnitude"]}と推定されます。
-                ''',
+                description=f'''<t:{time}:F>頃{sindo_data["title"]}の地震がありました。''',
+                embed.add_field(name="震源地", value={hypocenter_name}{longitude_and_latitude}, inline=False)
+                embed.add_field(name="マグニチュード", value=hypocenter["magnitude"], inline=False)
+                embed.add_field(name="震源の深さ", value=depth, inline=False)
                 color=sindo_data['color']
             )
             embed.set_footer(text='Provided by p2pquake.net')
