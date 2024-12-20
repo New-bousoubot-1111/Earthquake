@@ -1,7 +1,20 @@
 import nextcord
-from nextcord.ext import commands
-import datetime
+from nextcord.ext import commands, tasks
+import tomllib
+import websockets
+from websockets import client
 import json
+import datetime
+import os
+import sys
+import traceback
+import logging
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger('tasks')
+
+with open('json/eew.toml','rb') as f:
+  config = tomllib.load(f)
 
 sindoMap = {
   -1: {
@@ -47,75 +60,69 @@ sindoMap = {
 }
 
 class Test(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.previous_hypocenter = None  # 前回の震源地情報を保持
+  def __init__(self,bot):
+    self.bot = bot
 
-    @nextcord.slash_command(description="地震情報のテストを送信します")
-    async def test_eew(self, interaction: nextcord.Interaction):
-        """スラッシュコマンドでテスト地震情報を送信"""
-        test_data = {
-            'code': 551,
-            'earthquake': {
-                'time': '2024/12/20 10:00:00',
-                'maxScale': 40,
-                'hypocenter': {
-                    'name': '',
-                    'latitude': -200,
-                    'longitude': -200,
-                    'depth': 0,
-                    'magnitude': 4.2,
-                }
-            }
-        }
-        await self.handle_eew_data(test_data, interaction.channel_id)
-        await interaction.response.send_message("テスト用の地震情報を送信しました。", ephemeral=True)
+  @commands.Cog.listener()
+  async def on_ready(self):
+    self.eewReport.start()
 
-    async def handle_eew_data(self, data, channel_id):
-        """地震情報を処理して送信"""
-        sindo_data = sindoMap[data['earthquake']['maxScale']]
-        time_obj = datetime.datetime.strptime(data['earthquake']['time'], '%Y/%m/%d %H:%M:%S')
-        time = time_obj.strftime('%d日 %H時%M分')
-        hypocenter = data['earthquake']['hypocenter']
-        longitude_and_latitude = ''
-        if hypocenter['latitude'] != -200 and hypocenter['longitude'] != -200:
-            longitude_and_latitude = f'(北緯{hypocenter["latitude"]}、東経{hypocenter["longitude"]})'
-        if hypocenter['depth'] == 0:
-            depth = 'ごく浅い'
-        else:
-            depth = f'{hypocenter["depth"]}km'
+  @tasks.loop(seconds=1)
+  async def eewReport(self):
+    try:
+      log.info('P2P地震情報WebSocketAPIに接続中です。')
+      while True:
+        async for websocket in client.connect('wss://api.p2pquake.net/v2/ws'):
+          log.info('P2P地震情報WebSocketAPIに接続しました。')
+          try:
+            while True:
+              received = await websocket.recv()
+              data = json.loads(received)
+              print(datetime.datetime.now())
+              print(data['code'])
+              if data['code'] == 551:
+                sindo_data = sindoMap[data['earthquake']['maxScale']]
+                time_obj = datetime.datetime.strptime(data['earthquake']['time'], '%Y/%m/%d %H:%M:%S')
+                time = time_obj.strftime('%d日 %H時%M分')
+                hypocenter = data['earthquake']['hypocenter']
+                longitude_and_latitude = ''
+                if hypocenter['latitude'] != -200 and hypocenter['longitude'] != -200:
+                  longitude_and_latitude = f'(北緯{hypocenter["latitude"]}、東経{hypocenter["longitude"]})'
+                if hypocenter['depth'] == 0:
+                  depth = 'ごく浅い'
+                else:
+                  depth = f'{hypocenter["depth"]}km'
+                # 震源地が不明な場合
+                if not hypocenter['name']:
+                    hypocenter_name = None
+                else:
+                    hypocenter_name = hypocenter['name']
+                # Embedの作成
+                description = f'{time}頃、{sindo_data["title"]}の地震がありました。'
+                if not hypocenter_name:
+                    description += "\n震源地は現在調査中です。"
 
-        # 震源地が不明な場合
-        if not hypocenter['name']:
-            hypocenter_name = None
-        else:
-            hypocenter_name = hypocenter['name']
+                embed = nextcord.Embed(
+                    title='地震情報',
+                    description=description,
+                    color=sindo_data['color']
+                )
 
-        # Embedの作成
-        description = f'{time}頃、{sindo_data["title"]}の地震がありました。'
-        if not hypocenter_name:
-            description += "\n震源地は現在調査中です。"
-
-        embed = nextcord.Embed(
-            title='地震情報',
-            description=description,
-            color=sindo_data['color']
-        )
-
-        # 震源地がわかる場合のみフィールドを追加
-        if hypocenter_name:
-            embed.add_field(name="震源地", value=f"{hypocenter_name}{longitude_and_latitude}", inline=False)
-
-        embed.add_field(name="マグニチュード", value=hypocenter["magnitude"], inline=False)
-        embed.add_field(name="震源の深さ", value=depth, inline=False)
-        embed.set_footer(text='Provided by p2pquake.net')
-
-        # メッセージを送信
-        channel = self.bot.get_channel(channel_id)
-        await channel.send(embed=embed)
-
-        # 震源地情報を更新
-        self.previous_hypocenter = hypocenter_name
+                # 震源地がわかる場合のみフィールドを追加
+                if hypocenter_name:
+                    embed.add_field(name="震源地", value=f"{hypocenter_name}{longitude_and_latitude}", inline=False)
+                embed.add_field(name="マグニチュード", value=hypocenter["magnitude"], inline=False)
+                embed.add_field(name="震源の深さ", value=depth, inline=False)
+                embed.set_footer(text='Provided by p2pquake.net')
+                await self.bot.get_channel(1316288751479033856).send(embed=embed)
+          except websockets.ConnectionClosed:
+            log.info('P2P地震情報WebSocketAPIとの接続が終了しました。再接続しています。')
+            continue
+          except:
+            log.error(f'処理中にエラーが発生しました。\n{traceback.format_exc()}')
+            pass
+    except:
+      log.error(traceback.format_exc())
 
 def setup(bot):
   bot.add_cog(Test(bot))
