@@ -60,7 +60,7 @@ sindoMap = {
 }
 
 class Test(commands.Cog):
-  def __init__(self,bot):
+  def __init__(self, bot):
     self.bot = bot
 
   @commands.Cog.listener()
@@ -97,11 +97,28 @@ class Test(commands.Cog):
                     hypocenter_name = None
                 else:
                     hypocenter_name = hypocenter['name']
-                # Embedの作成
-                description = f'{time}頃、{sindo_data["title"]}の地震がありました。'
-                if not hypocenter_name:
-                    description += "\n震源地は現在調査中です。"
 
+                # 国内津波の有無をチェック
+                domestic_tsunami = data['earthquake'].get('domesticTsunami', 'None')
+
+                # 津波情報のメッセージを設定
+                if domestic_tsunami == 'None':
+                    tsunami_message = '津波の心配はありません。'
+                elif domestic_tsunami == 'Checking':
+                    tsunami_message = '津波の情報は調査中です。'
+                else:
+                    tsunami_message = f"津波: {domestic_tsunami}"
+
+                # 震源地と津波が両方不明の場合のメッセージ設定
+                if not hypocenter_name and domestic_tsunami == 'None':
+                    description = f'{time}頃、{sindo_data["title"]}の地震がありました。\n震源地・津波については現在調査中です。'
+                else:
+                    description = f'{time}頃、{sindo_data["title"]}の地震がありました。'
+                    if not hypocenter_name:
+                        description += "\n震源地は現在調査中です。"
+                    description += f"\n{tsunami_message}"  # 津波情報をdescriptionに追加
+
+                # Embedの作成
                 embed = nextcord.Embed(
                     title='地震情報',
                     description=description,
