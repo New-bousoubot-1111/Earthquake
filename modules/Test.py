@@ -3,11 +3,6 @@ from nextcord.ext import commands
 import datetime
 import json
 
-class Test(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.previous_hypocenter = None  # 前回の震源地情報を保持
-
 sindoMap = {
   -1: {
     'title': '不明',
@@ -50,6 +45,11 @@ sindoMap = {
     'color': 0xb40069
   }
 }
+
+class Test(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.previous_hypocenter = None  # 前回の震源地情報を保持
 
     @nextcord.slash_command(description="地震情報のテストを送信します")
     async def test_eew(self, interaction: nextcord.Interaction):
