@@ -97,7 +97,7 @@ class Test(commands.Cog):
                 description=f'''<t:{time}:F>頃{sindo_data["title"]}の地震がありました。''',
                 color=sindo_data['color']
             )
-            embed.add_field(name="震源地", value={hypocenter_name}{longitude_and_latitude}, inline=False)
+            embed.add_field(name="震源地", value=f"{hypocenter_name}{longitude_and_latitude}", inline=False)
             embed.add_field(name="マグニチュード", value=hypocenter["magnitude"], inline=False)
             embed.add_field(name="震源の深さ", value=depth, inline=False)
             embed.set_footer(text='Provided by p2pquake.net')
