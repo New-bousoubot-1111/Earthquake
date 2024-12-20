@@ -86,23 +86,35 @@ class Test(commands.Cog):
 
         # 震源地が不明な場合
         if not hypocenter['name']:
-            hypocenter_name = '調査中'
+            hypocenter_name = None
         else:
             hypocenter_name = hypocenter['name']
 
-        # 前回の震源地情報と比較
-        if hypocenter_name != self.previous_hypocenter:
-            embed = nextcord.Embed(
-                title='地震情報',
-                description=f'''<t:{time}:F>頃{sindo_data["title"]}の地震がありました。''',
-                color=sindo_data['color']
-            )
+        # Embedの作成
+        description = f'''<t:{time}:F>頃、{sindo_data["title"]}の地震がありました。'''
+        if not hypocenter_name:
+            description += "\n震源地は現在調査中です。"
+
+        embed = nextcord.Embed(
+            title='地震情報',
+            description=description,
+            color=sindo_data['color']
+        )
+
+        # 震源地がわかる場合のみフィールドを追加
+        if hypocenter_name:
             embed.add_field(name="震源地", value=f"{hypocenter_name}{longitude_and_latitude}", inline=False)
-            embed.add_field(name="マグニチュード", value=hypocenter["magnitude"], inline=False)
-            embed.add_field(name="震源の深さ", value=depth, inline=False)
-            embed.set_footer(text='Provided by p2pquake.net')
-            channel = self.bot.get_channel(channel_id)
-            await channel.send(embed=embed)
-            self.previous_hypocenter = hypocenter_name  # 震源地情報を更新
+
+        embed.add_field(name="マグニチュード", value=hypocenter["magnitude"], inline=False)
+        embed.add_field(name="震源の深さ", value=depth, inline=False)
+        embed.set_footer(text='Provided by p2pquake.net')
+
+        # メッセージを送信
+        channel = self.bot.get_channel(channel_id)
+        await channel.send(embed=embed)
+
+        # 震源地情報を更新
+        self.previous_hypocenter = hypocenter_name
+
 def setup(bot):
   bot.add_cog(Test(bot))
