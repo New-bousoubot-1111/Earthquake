@@ -18,43 +18,43 @@ with open('json/eew.toml','rb') as f:
 
 sindoMap = {
   -1: {
-    'title': '不明',
+    'title': '',
     'color': 0x000000
   },
   10: {
-    'title': '最大震度1',
+    'title': '最大震度1の',
     'color': 0xf2f2ff
   },
   20: {
-    'title': '最大震度2',
+    'title': '最大震度2の',
     'color': 0x00aaff
   },
   30: {
-    'title': '最大震度3',
+    'title': '最大震度3の',
     'color': 0x0040ff
   },
   40: {
-    'title': '最大震度4',
+    'title': '最大震度4の',
     'color': 0xfae696
   },
   50: {
-    'title': '最大震度5弱',
+    'title': '最大震度5弱の',
     'color': 0xffe600
   },
   55: {
-    'title': '最大震度5強',
+    'title': '最大震度5強の',
     'color': 0xff9900
   },
   60: {
-    'title': '最大震度6弱',
+    'title': '最大震度6弱の',
     'color': 0xff2600
   },
   65: {
-    'title': '最大震度6強',
+    'title': '最大震度6強の',
     'color': 0xa50021
   },
   70: {
-    'title': '最大震度7',
+    'title': '最大震度7の',
     'color': 0xb40069
   }
 }
@@ -110,10 +110,10 @@ class Test(commands.Cog):
                     tsunami_message = f"津波: {domestic_tsunami}"
 
                 # 震源地と津波が両方不明の場合のメッセージ設定
-                if not hypocenter_name and domestic_tsunami == 'None':
-                    description = f'{time}頃、{sindo_data["title"]}の地震がありました。\n震源地・津波については現在調査中です。'
+                if not hypocenter_name == "None" and domestic_tsunami == 'Checking':
+                    description = f'{time}頃、{sindo_data["title"]}地震がありました。\n震源地・津波については現在調査中です。'
                 else:
-                    description = f'{time}頃、{sindo_data["title"]}の地震がありました。'
+                    description = f'{time}頃、{sindo_data["title"]}地震がありました。'
                     if not hypocenter_name:
                         description += "\n震源地は現在調査中です。"
                     description += f"\n{tsunami_message}"  # 津波情報をdescriptionに追加
