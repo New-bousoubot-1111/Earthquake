@@ -61,15 +61,7 @@ async def on_application_command_error(ctx, error:Exception):
         with open(f'errorlogs/{str(ctx.message.id)}.errorlog', 'w') as f:
             f.write(error2)
         print(Fore.RED + f"[Error]{error2}" + Fore.RESET)
-
-
-# エラー通知を送信する関数
-async def send_error_message(error_message):
-    channel = bot.get_channel(CHANNEL_ID)  # チャンネルIDを指定
-    if channel:  # チャンネルが正しく取得できた場合のみメッセージ送信
-        await channel.send(f"Bot Crashed/Error/Disconnected:\n{error_message}")
-    else:
-        print("Error: Invalid channel ID.")
+	    
 
 # on_errorイベント: エラーが発生したときに通知
 @bot.event
