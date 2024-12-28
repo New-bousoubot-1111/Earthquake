@@ -11,56 +11,56 @@ import traceback
 import logging
 
 logging.basicConfig(level=logging.INFO)
-log = logging.getLogger('tasks')
+log = logging.getLogger('Test')
 
 with open('json/eew.toml','rb') as f:
   config = tomllib.load(f)
 
 sindoMap = {
   -1: {
-    'title': '不明',
+    'title': '',
     'color': 0x000000
   },
   10: {
-    'title': '震度1',
+    'title': '最大震度1の',
     'color': 0xf2f2ff
   },
   20: {
-    'title': '震度2',
+    'title': '最大震度2の',
     'color': 0x00aaff
   },
   30: {
-    'title': '震度3',
+    'title': '最大震度3の',
     'color': 0x0040ff
   },
   40: {
-    'title': '震度4',
+    'title': '最大震度4の',
     'color': 0xfae696
   },
   50: {
-    'title': '震度5弱',
+    'title': '最大震度5弱の',
     'color': 0xffe600
   },
   55: {
-    'title': '震度5強',
+    'title': '最大震度5強の',
     'color': 0xff9900
   },
   60: {
-    'title': '震度6弱',
+    'title': '最大震度6弱の',
     'color': 0xff2600
   },
   65: {
-    'title': '震度6強',
+    'title': '最大震度6強の',
     'color': 0xa50021
   },
   70: {
-    'title': '震度7',
+    'title': '最大震度7の',
     'color': 0xb40069
   }
 }
 
 class Tasks(commands.Cog):
-  def __init__(self,bot):
+  def __init__(self, bot):
     self.bot = bot
 
   @commands.Cog.listener()
@@ -82,7 +82,8 @@ class Tasks(commands.Cog):
               print(data['code'])
               if data['code'] == 551:
                 sindo_data = sindoMap[data['earthquake']['maxScale']]
-                time = datetime.datetime.strptime(data['earthquake']['time'],'%Y/%m/%d %H:%M:%S').timestamp()
+                time_obj = datetime.datetime.strptime(data['earthquake']['time'], '%Y/%m/%d %H:%M:%S')
+                time = time_obj.strftime('%d日 %H時%M分')
                 hypocenter = data['earthquake']['hypocenter']
                 longitude_and_latitude = ''
                 if hypocenter['latitude'] != -200 and hypocenter['longitude'] != -200:
@@ -91,22 +92,56 @@ class Tasks(commands.Cog):
                   depth = 'ごく浅い'
                 else:
                   depth = f'{hypocenter["depth"]}km'
+                # 震源地が不明な場合
+                if not hypocenter['name']:
+                    hypocenter_name = None
+                else:
+                    hypocenter_name = hypocenter['name']
 
+                # 国内津波の有無をチェック
+                domestic_tsunami = data['earthquake'].get('domesticTsunami', 'None')
+
+                # 津波情報のメッセージを設定
+                if domestic_tsunami == 'None':
+                    tsunami_message = 'この地震による津波の心配はありません。'
+                elif domestic_tsunami == 'Checking':
+                    tsunami_message = '津波の有無は現在調査中です。'
+                else:
+                    tsunami_message = f"津波: {domestic_tsunami}"
+
+                # 震源地と津波が両方不明の場合のメッセージ設定
+                if not hypocenter_name == "None" and domestic_tsunami == 'Checking':
+                    description = f'{time}頃、{sindo_data["title"]}地震がありました。\n震源地・津波については現在調査中です。'
+                else:
+                    description = f'{time}頃、{sindo_data["title"]}地震がありました。'
+                    if not hypocenter_name:
+                        description += "\n震源地は現在調査中です。"
+                    description += f"\n{tsunami_message}"  # 津波情報をdescriptionに追加
+
+                # Embedの作成
                 embed = nextcord.Embed(
-                  title='地震情報',
-                  description=f'''<t:{time}:F>頃地震がありました。
-                  震源地は、{hypocenter["name"]}{longitude_and_latitude}で、最大深度は{sindo_data["title"]}、震源の深さは{depth}、マグニチュードは{hypocenter["magnitude"]}と推定されます。
-                  ''',
-                  color=sindo_data['color']
+                    title='地震情報',
+                    description=description,
+                    color=sindo_data['color']
                 )
-                embed.set_footer(text='Provided by p2pquake.net')
+
+                # 震源地がわかる場合のみフィールドを追加
+                if hypocenter_name:
+                    embed.add_field(name="震源地", value=hypocenter_name, inline=False)
+                embed.add_field(name="マグニチュード", value=hypocenter["magnitude"], inline=False)
+                embed.add_field(name="震源の深さ", value=depth, inline=False)
                 await self.bot.get_channel(1316288751479033856).send(embed=embed)
           except websockets.ConnectionClosed:
             log.info('P2P地震情報WebSocketAPIとの接続が終了しました。再接続しています。')
             continue
+          except asyncio.CancelledError:
+            log.info('タスクがキャンセルされました。終了します。')
+            break
           except:
             log.error(f'処理中にエラーが発生しました。\n{traceback.format_exc()}')
             pass
+    except asyncio.CancelledError:
+      log.info('タスクがキャンセルされました。終了します。')
     except:
       log.error(traceback.format_exc())
 
