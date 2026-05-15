@@ -4,7 +4,7 @@ import traceback
 import json
 from colorama import Fore
 import os
-import webserver
+# import webserver
 import util
 import subprocess
 import sys
@@ -87,7 +87,7 @@ def handle_exception(exc_type, exc_value, exc_tb):
 # sys.excepthookにハンドラーをセット
 sys.excepthook = handle_exception
 
-webserver.start()
+# webserver.start()
 try:
     bot.run(os.getenv("token"))
 except:
