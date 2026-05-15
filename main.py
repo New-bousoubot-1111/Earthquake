@@ -91,4 +91,4 @@ sys.excepthook = handle_exception
 try:
     bot.run(os.getenv("token"))
 except:
-    os.system("kill 1")
+   # os.system("kill 1")
