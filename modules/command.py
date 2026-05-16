@@ -26,21 +26,45 @@ class command(commands.Cog):
 
   #eew
   @nextcord.slash_command(description="地震情報を表示します")
-  async def eew(self,ctx):
-    request = requests.get(f'https://api.p2pquake.net/v2/history?codes=551&limit=1')
-    response = request.json()[0]
-    data = response['earthquake']
-    hypocenter = data['hypocenter']
+  async def eew(self, ctx):
+    request = requests.get('https://api.p2pquake.net/v2/history?codes=551&limit=1')
     if request.status_code == 200:
-      embed=nextcord.Embed(title="地震情報",color=color)
-      embed.add_field(name="震源地",value=hypocenter['name'],inline=False)
-      embed.add_field(name="最大震度",value=round(data['maxScale']/10),inline=False)
-      embed.add_field(name="発生時刻",value=data['time'],inline=False)
-      embed.add_field(name="マグニチュード",value=hypocenter['magnitude'],inline=False)
-      embed.add_field(name="震源の深さ",value=f"{hypocenter['depth']}Km",inline=False)
-      await ctx.send(embed=embed)
+        response = request.json()[0]
+        data = response['earthquake']
+        hypocenter = data['hypocenter']
+        embed = nextcord.Embed(
+            title="地震情報",
+            color=color
+        )
+        embed.add_field(
+            name="震源地",
+            value=str(hypocenter['name']),
+            inline=False
+        )
+        embed.add_field(
+            name="最大震度",
+            value=str(round(data['maxScale'] / 10)),
+            inline=False
+        )
+        embed.add_field(
+            name="発生時刻",
+            value=str(data['time']),
+            inline=False
+        )
+        embed.add_field(
+            name="マグニチュード",
+            value=str(hypocenter['magnitude']),
+            inline=False
+        )
+        embed.add_field(
+            name="震源の深さ",
+            value=f"{hypocenter['depth']}Km",
+            inline=False
+        )
+        await ctx.send(embed=embed)
     else:
-      await ctx.send("APIリクエストでエラーが発生しました")
+        await ctx.send("APIリクエストでエラーが発生しました")
+    
   #eew2
   @nextcord.slash_command(description="地震情報を表示します(文式)")
   async def eew2(self,ctx):
