@@ -252,75 +252,76 @@ class command(commands.Cog):
         else:
             await ctx.send(embed=embed)
 
-  @nextcord.slash_command(description="地震情報を表示します(文式)")
-  async def eew2(self, ctx):
 
-      request = requests.get(
-          "https://api.p2pquake.net/v2/history?codes=551&limit=1"
-      )
+    @nextcord.slash_command(description="地震情報を表示します(文式)")
+    async def eew2(self, ctx):
 
-      if request.status_code != 200:
-          await ctx.send("APIリクエストでエラーが発生しました")
-          return
+        request = requests.get(
+            "https://api.p2pquake.net/v2/history?codes=551&limit=1"
+        )
 
-      response = request.json()[0]
+        if request.status_code != 200:
+            await ctx.send("APIリクエストでエラーが発生しました")
+            return
 
-      data = response['earthquake']
-      hypocenter = data['hypocenter']
+        response = request.json()[0]
 
-      hypocenter_name = hypocenter['name']
+        data = response['earthquake']
+        hypocenter = data['hypocenter']
 
-      latitude = hypocenter['latitude']
-      longitude = hypocenter['longitude']
+        hypocenter_name = hypocenter['name']
 
-      prefecture = get_prefecture(hypocenter_name)
+        latitude = hypocenter['latitude']
+        longitude = hypocenter['longitude']
 
-      # 地図生成
-      if prefecture is not None:
-          create_earthquake_map(
-              prefecture,
-              latitude,
-              longitude
-          )
+        prefecture = get_prefecture(hypocenter_name)
 
-      # Embed作成
-      embed = nextcord.Embed(
-          title="地震情報",
-          color=color
-      )
+        # 地図生成
+        if prefecture is not None:
+            create_earthquake_map(
+                prefecture,
+                latitude,
+                longitude
+            )
 
-      embed.add_field(
-          name=(
-              f"{data['time']}頃、"
-              f"**{hypocenter_name}**で"
-              f"地震がありました"
-          ),
-          value=(
-              f"最大震度は **{round(data['maxScale']/10)}**\n"
-              f"震源の深さは **{hypocenter['depth']}Km**\n"
-              f"マグニチュードは **{hypocenter['magnitude']}**"
-          ),
-          inline=False
-      )
+        # Embed作成
+        embed = nextcord.Embed(
+            title="地震情報",
+            color=color
+        )
 
-      # 画像添付
-      if os.path.exists("earthquake.png"):
+        embed.add_field(
+            name=(
+                f"{data['time']}頃、"
+                f"**{hypocenter_name}**で"
+                f"地震がありました"
+            ),
+            value=(
+                f"最大震度は **{round(data['maxScale']/10)}**\n"
+                f"震源の深さは **{hypocenter['depth']}Km**\n"
+                f"マグニチュードは **{hypocenter['magnitude']}**"
+            ),
+            inline=False
+        )
 
-          file = nextcord.File(
-              "earthquake.png",
-              filename="earthquake.png"
-          )
-          embed.set_image(
-              url="attachment://earthquake.png"
-          )
+        # 画像添付
+        if os.path.exists("earthquake.png"):
 
-          await ctx.send(
-              embed=embed,
-              file=file
-          )
+            file = nextcord.File(
+                "earthquake.png",
+                filename="earthquake.png"
+            )
+            embed.set_image(
+                url="attachment://earthquake.png"
+            )
 
-      else:
-          await ctx.send(embed=embed)
+            await ctx.send(
+                embed=embed,
+                file=file
+            )
+
+        else:
+            await ctx.send(embed=embed)
 
     # ==================================
     # HELP
