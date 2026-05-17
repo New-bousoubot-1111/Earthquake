@@ -10,6 +10,8 @@ import os
 from dateutil import parser
 from datetime import datetime
 import pytz
+import matplotlib.pyplot as plt
+import geopandas as gpd
 
 # 設定ファイルの読み込み
 with open('json/config.json', 'r') as f:
@@ -416,10 +418,9 @@ class earthquake(commands.Cog):
                 embed.add_field(name="震源の深さ", value=f"{hypocenter['depth']}Km", inline=False)
                 file = nextcord.File("earthquake.png",filename="earthquake.png")
                 embed.set_image(url="attachment://earthquake.png")
-                await ctx.send(embed=embed,file=file)
                 embed.set_footer(text=current_time)
                 eew_channel = self.bot.get_channel(int(config['eew_channel']))
-                await eew_channel.send(embed=embed)
+                await eew_channel.send(embed=embed,file=file)
                 
                 # Update eew_id in PostgreSQL
                 await self.set_eew_id(response['id'])
