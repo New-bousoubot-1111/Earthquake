@@ -304,7 +304,7 @@ class command(commands.Cog):
 
         embed.add_field(
             name="マグニチュード",
-            value=hypocenter["magnitude"],
+            value=str(hypocenter["magnitude"]),
             inline=False
         )
 
@@ -373,15 +373,15 @@ class command(commands.Cog):
             name=(
                 f"{data['time']}頃、"
                 f"**{hypocenter['name']}**で"
-                f"地震がありました"
+                f"地震がありました。"
             ),
             value=(
-                f"最大震度は "
-                f"**{round(data['maxScale']/10)}**\n"
-                f"震源の深さは "
-                f"**{hypocenter['depth']}Km**\n"
-                f"マグニチュードは "
-                f"**{hypocenter['magnitude']}**"
+                f"最大震度は"
+                f"**{round(data['maxScale']/10)}**、"
+                f"震源の深さは"
+                f"**{hypocenter['depth']}Km**、"
+                f"マグニチュードは"
+                f"**{hypocenter['magnitude']}**です"
             ),
             inline=False
         )
