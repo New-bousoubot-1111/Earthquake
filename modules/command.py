@@ -310,7 +310,7 @@ class command(commands.Cog):
 
         embed.add_field(
             name="震源の深さ",
-            value=f"{hypocenter['depth']}Km",
+            value=f"{hypocenter['depth']}Km\n{isArea}",
             inline=False
         )
 
@@ -382,6 +382,7 @@ class command(commands.Cog):
                 f"**{hypocenter['depth']}Km**、"
                 f"マグニチュードは"
                 f"**{hypocenter['magnitude']}**です"
+                f"{isArea}"
             ),
             inline=False
         )
