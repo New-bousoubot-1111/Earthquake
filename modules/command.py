@@ -91,7 +91,7 @@ def create_earthquake_map(prefecture_name, latitude, longitude):
     gdf["color"] = "#4d4d4d"
 
     # 該当県を青に
-    gdf.loc[gdf["name"] == prefecture_name, "color"] = "#1f5d8c"
+    gdf.loc[gdf["nam_ja"] == prefecture_name, "color"] = "#1f5d8c"
 
     # 描画
     fig, ax = plt.subplots(figsize=(14, 10))
