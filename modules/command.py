@@ -2,89 +2,156 @@ import nextcord
 from nextcord.ext import commands
 import requests
 import json
-import os
-import re
 from colorama import Fore
-import geopandas as gpd
 import matplotlib.pyplot as plt
-from PIL import Image, ImageDraw
+import geopandas as gpd
 import util
+import os
 
 with open('json/config.json', 'r', encoding='utf-8') as f:
     config = json.load(f)
 
 with open('json/help.json', 'r', encoding='utf-8') as f:
-    help = json.load(f)
+    help_json = json.load(f)
 
 color = nextcord.Colour(int(config['color'], 16))
 
-JAPAN_GEOJSON = "./images/japan.geojson"
 
-gdf = gpd.read_file(JAPAN_GEOJSON)
+# =========================
+# 震源地名 → 都道府県変換
+# =========================
+def get_prefecture(hypocenter_name):
 
-def is_japanese(string):
-    return True if re.search(r'[ぁ-んァ-ン]', string) else False
+    prefectures = [
+        "北海道",
+        "青森県",
+        "岩手県",
+        "宮城県",
+        "秋田県",
+        "山形県",
+        "福島県",
+        "茨城県",
+        "栃木県",
+        "群馬県",
+        "埼玉県",
+        "千葉県",
+        "東京都",
+        "神奈川県",
+        "新潟県",
+        "富山県",
+        "石川県",
+        "福井県",
+        "山梨県",
+        "長野県",
+        "岐阜県",
+        "静岡県",
+        "愛知県",
+        "三重県",
+        "滋賀県",
+        "京都府",
+        "大阪府",
+        "兵庫県",
+        "奈良県",
+        "和歌山県",
+        "鳥取県",
+        "島根県",
+        "岡山県",
+        "広島県",
+        "山口県",
+        "徳島県",
+        "香川県",
+        "愛媛県",
+        "高知県",
+        "福岡県",
+        "佐賀県",
+        "長崎県",
+        "熊本県",
+        "大分県",
+        "宮崎県",
+        "鹿児島県",
+        "沖縄県"
+    ]
 
-def generate_earthquake_map(lat, lon):
+    for pref in prefectures:
+        if pref in hypocenter_name:
+            return pref
 
-    fig, ax = plt.subplots(figsize=(10, 12))
+    return None
 
-    fig.patch.set_facecolor("#2a2a2a")
-    ax.set_facecolor("#2a2a2a")
 
+# =========================
+# 地図生成
+# =========================
+def create_earthquake_map(prefecture_name, latitude, longitude):
+
+    # 地図データ読み込み
+    gdf = gpd.read_file("./images/japan.geojson")
+
+    # 色設定
+    gdf["color"] = "#4d4d4d"
+
+    # 該当県を青に
+    gdf.loc[gdf["name"] == prefecture_name, "color"] = "#1f5d8c"
+
+    # 描画
+    fig, ax = plt.subplots(figsize=(14, 10))
+
+    # 背景色
+    fig.patch.set_facecolor("#0a1110")
+    ax.set_facecolor("#0a1110")
+
+    # 地図描画
     gdf.plot(
         ax=ax,
-        color="#767676",
-        edgecolor="#d0d0d0",
-        linewidth=0.5
+        color=gdf["color"],
+        edgecolor="white",
+        linewidth=0.6
     )
 
+    # 震源位置に × マーク
     ax.plot(
-        lon,
-        lat,
+        longitude,
+        latitude,
         marker='x',
-        markersize=25,
-        markeredgewidth=5,
+        markersize=30,
+        markeredgewidth=6,
         color='red'
     )
 
-    ax.set_xlim([122, 154])
-    ax.set_ylim([20, 47])
+    # 数字ラベル
+    target = gdf[gdf["name"] == prefecture_name]
 
-    ax.set_axis_off()
+    if not target.empty:
+        point = target.geometry.centroid.iloc[0]
 
-    output_path = "images/earthquake_map.png"
+        ax.text(
+            point.x,
+            point.y,
+            "1",
+            fontsize=25,
+            color="white",
+            ha="center",
+            va="center",
+            bbox=dict(
+                boxstyle="square",
+                facecolor="#24577a",
+                edgecolor="#17384f"
+            )
+        )
 
-    os.makedirs(
-        os.path.dirname(output_path),
-        exist_ok=True
-    )
+    # 軸消す
+    ax.axis("off")
 
+    # 保存
     plt.savefig(
-        output_path,
-        bbox_inches='tight',
-        dpi=300,
-        facecolor=fig.get_facecolor()
+        "earthquake.png",
+        bbox_inches="tight",
+        facecolor=fig.get_facecolor(),
+        dpi=300
     )
 
     plt.close()
 
-    image = Image.open(output_path)
-
-    draw = ImageDraw.Draw(image)
-
-    width, height = image.size
-
-    draw.rectangle(
-        [(30, 30), (650, 170)],
-        fill=(255, 255, 255),
-        outline=(255, 0, 0),
-        width=8
-    )
-
-    image.save(output_path)
-
-    return output_path
 
 class command(commands.Cog):
 
@@ -95,136 +162,86 @@ class command(commands.Cog):
     async def on_ready(self):
         print(Fore.BLUE + "|command       |" + Fore.RESET)
 
-
-    @nextcord.slash_command(
-        description="地震情報を表示します"
-    )
+    # ==================================
+    # 地震情報
+    # ==================================
+    @nextcord.slash_command(description="地震情報を表示します")
     async def eew(self, ctx):
-
-        request = requests.get(
-            'https://api.p2pquake.net/v2/history?codes=551&limit=1'
-        )
-
-        response = request.json()[0]
-
-        data = response['earthquake']
-
-        hypocenter = data['hypocenter']
-
-        if request.status_code == 200:
-
-            lat = hypocenter['latitude']
-            lon = hypocenter['longitude']
-
-            # 地図生成
-            map_path = generate_earthquake_map(
-                lat,
-                lon
-            )
-
-            embed = nextcord.Embed(
-                title="地震情報",
-                color=color
-            )
-
-            embed.add_field(
-                name="震源地",
-                value=hypocenter['name'],
-                inline=False
-            )
-
-            embed.add_field(
-                name="最大震度",
-                value=round(data['maxScale'] / 10),
-                inline=False
-            )
-
-            embed.add_field(
-                name="発生時刻",
-                value=data['time'],
-                inline=False
-            )
-
-            embed.add_field(
-                name="マグニチュード",
-                value=hypocenter['magnitude'],
-                inline=False
-            )
-
-            embed.add_field(
-                name="震源の深さ",
-                value=f"{hypocenter['depth']}Km",
-                inline=False
-            )
-
-            # 地図画像
-            file = nextcord.File(
-                map_path,
-                filename="earthquake_map.png"
-            )
-
-            embed.set_image(
-                url="attachment://earthquake_map.png"
-            )
-
-            await ctx.send(
-                embed=embed,
-                file=file
-            )
-
-        else:
-            await ctx.send(
-                "APIリクエストでエラーが発生しました"
-            )
-
-    @nextcord.slash_command(
-        description="地震情報を表示します(文式)"
-    )
-    async def eew2(self, ctx):
 
         request = requests.get(
             "https://api.p2pquake.net/v2/history?codes=551&limit=1"
         )
 
+        if request.status_code != 200:
+            await ctx.send("APIリクエストでエラーが発生しました")
+            return
+
         response = request.json()[0]
 
         data = response['earthquake']
-
         hypocenter = data['hypocenter']
 
-        if request.status_code == 200:
+        hypocenter_name = hypocenter['name']
 
-            lat = hypocenter['latitude']
-            lon = hypocenter['longitude']
+        latitude = hypocenter['latitude']
+        longitude = hypocenter['longitude']
 
-            # 地図生成
-            map_path = generate_earthquake_map(
-                lat,
-                lon
+        prefecture = get_prefecture(hypocenter_name)
+
+        # 地図生成
+        if prefecture is not None:
+            create_earthquake_map(
+                prefecture,
+                latitude,
+                longitude
             )
 
-            embed = nextcord.Embed(
-                title="地震情報",
-                color=color
-            )
+        # Embed
+        embed = nextcord.Embed(
+            title="地震情報",
+            color=color
+        )
 
-            embed.add_field(
-                name=f"{data['time']}頃、{hypocenter['name']}で地震がありました",
-                value=(
-                    f"最大震度は{round(data['maxScale']/10)}\n"
-                    f"震源の深さは{hypocenter['depth']}Km\n"
-                    f"マグニチュードは{hypocenter['magnitude']}"
-                ),
-                inline=False
-            )
+        embed.add_field(
+            name="震源地",
+            value=hypocenter_name,
+            inline=False
+        )
+
+        embed.add_field(
+            name="最大震度",
+            value=round(data['maxScale'] / 10),
+            inline=False
+        )
+
+        embed.add_field(
+            name="発生時刻",
+            value=data['time'],
+            inline=False
+        )
+
+        embed.add_field(
+            name="マグニチュード",
+            value=hypocenter['magnitude'],
+            inline=False
+        )
+
+        embed.add_field(
+            name="震源の深さ",
+            value=f"{hypocenter['depth']}Km",
+            inline=False
+        )
+
+        # 画像添付
+        if os.path.exists("earthquake.png"):
 
             file = nextcord.File(
-                map_path,
-                filename="earthquake_map.png"
+                "earthquake.png",
+                filename="earthquake.png"
             )
 
             embed.set_image(
-                url="attachment://earthquake_map.png"
+                url="attachment://earthquake.png"
             )
 
             await ctx.send(
@@ -233,18 +250,87 @@ class command(commands.Cog):
             )
 
         else:
-            await ctx.send(
-                "APIリクエストでエラーが発生しました"
-            )
+            await ctx.send(embed=embed)
 
-    @nextcord.slash_command(
-        description="botの情報やコマンドを表示します"
-    )
+  @nextcord.slash_command(description="地震情報を表示します(文式)")
+  async def eew2(self, ctx):
+
+      request = requests.get(
+          "https://api.p2pquake.net/v2/history?codes=551&limit=1"
+      )
+
+      if request.status_code != 200:
+          await ctx.send("APIリクエストでエラーが発生しました")
+          return
+
+      response = request.json()[0]
+
+      data = response['earthquake']
+      hypocenter = data['hypocenter']
+
+      hypocenter_name = hypocenter['name']
+
+      latitude = hypocenter['latitude']
+      longitude = hypocenter['longitude']
+
+      prefecture = get_prefecture(hypocenter_name)
+
+      # 地図生成
+      if prefecture is not None:
+          create_earthquake_map(
+              prefecture,
+              latitude,
+              longitude
+          )
+
+      # Embed作成
+      embed = nextcord.Embed(
+          title="地震情報",
+          color=color
+      )
+
+      embed.add_field(
+          name=(
+              f"{data['time']}頃、"
+              f"**{hypocenter_name}**で"
+              f"地震がありました"
+          ),
+          value=(
+              f"最大震度は **{round(data['maxScale']/10)}**\n"
+              f"震源の深さは **{hypocenter['depth']}Km**\n"
+              f"マグニチュードは **{hypocenter['magnitude']}**"
+          ),
+          inline=False
+      )
+
+      # 画像添付
+      if os.path.exists("earthquake.png"):
+
+          file = nextcord.File(
+              "earthquake.png",
+              filename="earthquake.png"
+          )
+          embed.set_image(
+              url="attachment://earthquake.png"
+          )
+
+          await ctx.send(
+              embed=embed,
+              file=file
+          )
+
+      else:
+          await ctx.send(embed=embed)
+
+    # ==================================
+    # HELP
+    # ==================================
+    @nextcord.slash_command(description="botの情報やコマンドを表示します")
     async def help(self, ctx):
 
         creators = []
 
-        for creator in help['owners']:
+        for creator in help_json['owners']:
             creators.append(
                 await self.bot.fetch_user(int(creator))
             )
@@ -255,8 +341,8 @@ class command(commands.Cog):
         )
 
         commands_list = "".join(
-            f"`{help['prefix']}{x}` "
-            for x in help['commands_list']
+            f"`{help_json['prefix']}{x}` "
+            for x in help_json['commands_list']
         )
 
         embed = nextcord.Embed(
@@ -266,7 +352,7 @@ class command(commands.Cog):
 
         embed.add_field(
             name="作成者",
-            value=f"{creators}"
+            value=creators
         )
 
         embed.add_field(
