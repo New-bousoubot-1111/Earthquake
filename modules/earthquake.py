@@ -224,7 +224,7 @@ def create_earthquake_map(latitude, longitude, points):
 
     # 保存
     plt.savefig(
-        "earthquake.png",
+        "earthquake2.png",
         bbox_inches="tight",
         facecolor=fig.get_facecolor(),
         dpi=300
@@ -416,7 +416,7 @@ class earthquake(commands.Cog):
                 embed.add_field(name="震源地", value=hypocenter['name'], inline=False)
                 embed.add_field(name="マグニチュード", value=hypocenter['magnitude'], inline=False)
                 embed.add_field(name="震源の深さ", value=f"{hypocenter['depth']}Km", inline=False)
-                file = nextcord.File("earthquake.png",filename="earthquake.png")
+                file = nextcord.File("earthquake2.png",filename="earthquake2.png")
                 embed.set_image(url="attachment://earthquake.png")
                 embed.set_footer(text=current_time)
                 eew_channel = self.bot.get_channel(int(config['eew_channel']))
