@@ -23,6 +23,7 @@ with open('json/config.json', 'r') as f:
 color = nextcord.Colour(int(config['color'],16))
 CHANNEL_ID = 1073233143412301927
 
+
 intents = nextcord.Intents.all()
 intents.members = True
 intents.message_content = True
@@ -63,6 +64,15 @@ async def on_application_command_error(ctx, error:Exception):
         print(Fore.RED + f"[Error]{error2}" + Fore.RESET)
 	    
 
+ERROR_CHANNEL_ID = 1073233143412301927
+
+async def send_error_message(message):
+    channel = bot.get_channel(ERROR_CHANNEL_ID)
+
+    if channel is not None:
+        await channel.send(f"```py\n{message[:1900]}\n```")
+    else:
+        print("エラーチャンネルが見つかりません")
 # on_errorイベント: エラーが発生したときに通知
 @bot.event
 async def on_error(event, *args, **kwargs):
