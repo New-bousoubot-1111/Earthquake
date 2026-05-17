@@ -185,7 +185,7 @@ def create_earthquake_map(latitude, longitude, points):
         longitude,
         latitude,
         marker='x',
-        markersize=14,
+        markersize=16,
         markeredgewidth=4,
         color='red'
     )
@@ -193,7 +193,7 @@ def create_earthquake_map(latitude, longitude, points):
     # ==========================================
     # ズーム
     # ==========================================
-    zoom = 1.8
+    zoom = 2.3
 
     ax.set_xlim(
         longitude - zoom,
