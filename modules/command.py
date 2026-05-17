@@ -119,7 +119,7 @@ def create_earthquake_map(prefecture_name, latitude, longitude):
     )
 
     # 数字ラベル
-    target = gdf[gdf["name"] == prefecture_name]
+    target = gdf[gdf["nam_ja"] == prefecture_name]
 
     if not target.empty:
         point = target.geometry.centroid.iloc[0]
