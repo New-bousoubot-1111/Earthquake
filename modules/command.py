@@ -253,6 +253,8 @@ class command(commands.Cog):
         request = requests.get(
             "https://api.p2pquake.net/v2/history?codes=551&limit=1"
         )
+        if data[0]["isArea"] is False:
+            isArea = "この地震による津波の心配はありません" if not data[0]["isArea"] else "この地震で津波が発生する可能性があります\n今後の情報に注意してください"
 
         if request.status_code != 200:
 
