@@ -411,13 +411,6 @@ class earthquake(commands.Cog):
 
             response = request.json()[0]
 
-            current_id = str(response["id"])
-
-            saved_id = await self.get_eew_id()
-
-            print(f"saved_id: {saved_id}")
-            print(f"current_id: {current_id}")
-
             # 同じ地震なら送信しない
             if saved_id == current_id:
                 return
