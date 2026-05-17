@@ -49,6 +49,7 @@ def create_earthquake_map(latitude, longitude, points):
     # GeoJSON読み込み
     gdf = gpd.read_file("./images/japan.geojson")
 
+    # GeoJSONの県名カラム
     NAME_COLUMN = "nam_ja"
 
     # 初期色
@@ -59,10 +60,10 @@ def create_earthquake_map(latitude, longitude, points):
     # ==========================================
     prefecture_scales = {}
 
-    for point in points:
+    for point_data in points:
 
-        addr = point["addr"]
-        scale = point["scale"]
+        addr = point_data["addr"]
+        scale = point_data["scale"]
 
         pref = get_prefecture(addr)
 
@@ -71,6 +72,7 @@ def create_earthquake_map(latitude, longitude, points):
 
         intensity = round(scale / 10)
 
+        # 最大震度のみ保持
         if pref not in prefecture_scales:
             prefecture_scales[pref] = intensity
 
@@ -95,8 +97,11 @@ def create_earthquake_map(latitude, longitude, points):
         elif intensity == 4:
             map_color = "#d97706"
 
-        else:
+        elif intensity >= 5:
             map_color = "#c0392b"
+
+        else:
+            map_color = "#4d4d4d"
 
         gdf.loc[
             gdf[NAME_COLUMN] == pref,
@@ -108,9 +113,11 @@ def create_earthquake_map(latitude, longitude, points):
     # ==========================================
     fig, ax = plt.subplots(figsize=(14, 10))
 
-    fig.patch.set_facecolor("#0a1110")
-    ax.set_facecolor("#0a1110")
+    # 背景色
+    fig.patch.set_facecolor("#020c0d")
+    ax.set_facecolor("#020c0d")
 
+    # 地図描画
     gdf.plot(
         ax=ax,
         color=gdf["color"],
@@ -119,7 +126,7 @@ def create_earthquake_map(latitude, longitude, points):
     )
 
     # ==========================================
-    # 震度表示（周辺のみ）
+    # 震度表示
     # ==========================================
     for pref, intensity in prefecture_scales.items():
 
@@ -130,23 +137,10 @@ def create_earthquake_map(latitude, longitude, points):
         if target.empty:
             continue
 
-        point = target.geometry.centroid.iloc[0]
+        # centroidよりズレにくい
+        point = target.geometry.representative_point().iloc[0]
 
-        # ==========================================
-        # 震源からの距離
-        # ==========================================
-        distance = (
-            (point.x - longitude) ** 2 +
-            (point.y - latitude) ** 2
-        ) ** 0.5
-
-        # 遠い県は表示しない
-        if distance > 6:
-            continue
-
-        # ==========================================
-        # 震度色
-        # ==========================================
+        # 震度背景色
         if intensity == 1:
             text_bg = "#24577a"
 
@@ -166,7 +160,7 @@ def create_earthquake_map(latitude, longitude, points):
             point.x,
             point.y,
             str(intensity),
-            fontsize=16,
+            fontsize=22,
             color="white",
             ha="center",
             va="center",
@@ -175,7 +169,8 @@ def create_earthquake_map(latitude, longitude, points):
                 facecolor=text_bg,
                 edgecolor="#102433",
                 alpha=0.95
-            )
+            ),
+            zorder=5
         )
 
     # ==========================================
@@ -186,8 +181,9 @@ def create_earthquake_map(latitude, longitude, points):
         latitude,
         marker='x',
         markersize=16,
-        markeredgewidth=4,
-        color='red'
+        markeredgewidth=3,
+        color='red',
+        zorder=10
     )
 
     # ==========================================
@@ -351,6 +347,7 @@ class command(commands.Cog):
             response["points"]
         )
 
+        # Embed
         embed = nextcord.Embed(
             title="地震情報",
             color=color
@@ -373,6 +370,7 @@ class command(commands.Cog):
             inline=False
         )
 
+        # 画像
         file = nextcord.File(
             "earthquake.png",
             filename="earthquake.png"
