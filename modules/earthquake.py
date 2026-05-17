@@ -239,11 +239,19 @@ class earthquake(commands.Cog):
         self.pool = None
 
     async def setup_db(self):
-        """PostgreSQLとの接続プールを作成します"""
-        self.pool = await asyncpg.create_pool(dsn=os.getenv("eew_cache_url"))
 
-        # 初回起動時にテーブルを作成
+        DATABASE_URL = os.getenv("eew_cache_url")
+
+        self.pool = await asyncpg.create_pool(
+            dsn=DATABASE_URL,
+            ssl="require",
+            min_size=1,
+            max_size=5
+        )
+
         async with self.pool.acquire() as conn:
+
+            # EEWキャッシュ
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS eew_cache (
                     key TEXT PRIMARY KEY,
@@ -251,8 +259,7 @@ class earthquake(commands.Cog):
                 )
             """)
 
-        # 初回起動時にeew_id用のテーブル作成
-        async with self.pool.acquire() as conn:
+            # 地震情報ID
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS eew_id (
                     key TEXT PRIMARY KEY,
@@ -260,37 +267,59 @@ class earthquake(commands.Cog):
                 )
             """)
 
+            print("PostgreSQL connected")
+
     async def get_cache(self, key):
-        """キャッシュからデータを取得"""
+
         async with self.pool.acquire() as conn:
-            result = await conn.fetchrow("SELECT value FROM eew_cache WHERE key = $1", key)
-            return json.loads(result['value']) if result else None
+
+            result = await conn.fetchrow(
+                "SELECT value FROM eew_cache WHERE key = $1",
+                key
+            )
+
+            if result:
+                return result["value"]
+
+            return None
 
     async def set_cache(self, key, value):
-        """キャッシュにデータを保存"""
+
         async with self.pool.acquire() as conn:
+
             await conn.execute("""
                 INSERT INTO eew_cache (key, value)
-                VALUES ($1, $2)
+                VALUES ($1, $2::jsonb)
                 ON CONFLICT (key)
                 DO UPDATE SET value = EXCLUDED.value
             """, key, json.dumps(value))
 
     async def get_eew_id(self):
-        """PostgreSQLからeew_idを取得"""
+
         async with self.pool.acquire() as conn:
-            result = await conn.fetchrow("SELECT value FROM eew_id WHERE key = $1", "eew_id")
-            return result['value'] if result else None
+
+            result = await conn.fetchrow(
+                "SELECT value FROM eew_id WHERE key = $1",
+                "eew_id"
+            )
+
+            if result:
+                return result["value"]
+
+            return None
 
     async def set_eew_id(self, eew_id):
-        """PostgreSQLにeew_idを保存"""
+
         async with self.pool.acquire() as conn:
+
             await conn.execute("""
                 INSERT INTO eew_id (key, value)
                 VALUES ($1, $2)
                 ON CONFLICT (key)
                 DO UPDATE SET value = EXCLUDED.value
-            """, "eew_id", eew_id)
+            """, "eew_id", str(eew_id))
+
+            print(f"Saved eew_id: {eew_id}")
 
     def safe_parse_time(time_str, default="不明"):
         try:
@@ -370,62 +399,140 @@ class earthquake(commands.Cog):
                 await self.set_cache("cache", data)
 
     #地震情報
-    @tasks.loop(seconds=2)
+    @tasks.loop(seconds=5)
     async def eew_info(self):
-        eew_id = await self.get_eew_id()
-        data = requests.get(f'https://api.p2pquake.net/v2/history?codes=551&limit=1').json()[0]["points"]
-        if data[0]["isArea"] is False:
-            isArea = "この地震による津波の心配はありません" if not data[0]["isArea"] else "この地震で津波が発生する可能性があります\n今後の情報に注意してください"
-        request = requests.get(f'https://api.p2pquake.net/v2/history?codes=551&limit=1')
-        response = request.json()[0]
-        data = response['earthquake']
-        hypocenter = data['hypocenter']
-        if request.status_code == 200:
-            if eew_id != response['id']:
-                # 震度に応じた色の設定
-                max_scale = round(data['maxScale'] / 10)
-                if max_scale == 1:
-                    color = 0x6c757d  # グレー
-                    image = "images/shindo1.png"
-                elif max_scale == 2:
-                    color = 0x6c757d  # グレー
-                    image = "images/shindo2.png"
-                elif max_scale == 3:
-                    color = 0x28a745  # 緑色
-                    image = "images/shindo3.png"
-                elif max_scale == 4:
-                    color = 0xffc107  # 黄色
-                    image = "images/shindo4.png"
-                elif max_scale == 5:
-                    color = 0xff7f00  # オレンジ色
-                    image = "images/shindo5.png"
-                elif max_scale == 6:
-                    color = 0xdc3545  # 赤色
-                    image = "images/shindo6.png"
-                elif max_scale == 7:
-                    color = 0x6f42c1  # 紫色
-                    image = "images/shindo7.png"
-                else:
-                    color = 0x6c757d  # デフォルト色
+        try:
+            request = requests.get(
+                "https://api.p2pquake.net/v2/history?codes=551&limit=1"
+            )
 
-                earthquake_time = parser.parse(data['time'])
-                formatted_time = earthquake_time.strftime('%H時%M分')
-                japan_timezone = pytz.timezone('Asia/Tokyo')
-                current_time = datetime.now(japan_timezone).strftime('%Y/%m/%d %H:%M')
-                embed = nextcord.Embed(title="地震情報", description=f"{formatted_time}頃、最大震度**{round(data['maxScale'] / 10)}**の地震がありました。\n{isArea}", color=color)
-                embed.add_field(name="震源地", value=hypocenter['name'], inline=False)
-                embed.add_field(name="マグニチュード", value=hypocenter['magnitude'], inline=False)
-                embed.add_field(name="震源の深さ", value=f"{hypocenter['depth']}Km", inline=False)
-                file = nextcord.File("earthquake2.png",filename="earthquake2.png")
-                embed.set_image(url="attachment://earthquake2.png")
-                embed.set_footer(text=current_time)
-                eew_channel = self.bot.get_channel(int(config['eew_channel']))
-                await eew_channel.send(embed=embed,file=file)
-                
-                # Update eew_id in PostgreSQL
-                await self.set_eew_id(response['id'])
-            else:
+            if request.status_code != 200:
                 return
+
+            response = request.json()[0]
+
+            current_id = str(response["id"])
+
+            saved_id = await self.get_eew_id()
+
+            print(f"saved_id: {saved_id}")
+            print(f"current_id: {current_id}")
+
+            # 同じ地震なら送信しない
+            if saved_id == current_id:
+                return
+
+            data = response["earthquake"]
+
+            hypocenter = data["hypocenter"]
+
+            points = response["points"]
+
+            latitude = hypocenter["latitude"]
+            longitude = hypocenter["longitude"]
+
+            # 地図生成
+            create_earthquake_map(
+                latitude,
+                longitude,
+                points
+            )
+
+            # 津波
+            if points[0]["isArea"] is False:
+                isArea = "この地震による津波の心配はありません"
+            else:
+                isArea = (
+                    "この地震で津波が発生する可能性があります\n"
+                    "今後の情報に注意してください"
+                )
+
+            # 色
+            max_scale = round(data["maxScale"] / 10)
+
+            if max_scale <= 2:
+                embed_color = 0x6c757d
+
+            elif max_scale == 3:
+                embed_color = 0x28a745
+
+            elif max_scale == 4:
+                embed_color = 0xffc107
+
+            elif max_scale == 5:
+                embed_color = 0xff7f00
+
+            elif max_scale == 6:
+                embed_color = 0xdc3545
+
+            else:
+                embed_color = 0x6f42c1
+
+            earthquake_time = parser.parse(data["time"])
+
+            formatted_time = earthquake_time.strftime('%H時%M分')
+
+            japan_timezone = pytz.timezone('Asia/Tokyo')
+
+            current_time = datetime.now(
+                japan_timezone
+            ).strftime('%Y/%m/%d %H:%M')
+
+            embed = nextcord.Embed(
+                title="地震情報",
+                description=
+                f"{formatted_time}頃、"
+                f"最大震度**{max_scale}**の地震がありました。\n"
+                f"{isArea}",
+                color=embed_color
+            )
+
+            embed.add_field(
+                name="震源地",
+                value=str(hypocenter["name"]),
+                inline=False
+            )
+
+            embed.add_field(
+                name="マグニチュード",
+                value=str(hypocenter["magnitude"]),
+                inline=False
+            )
+
+            embed.add_field(
+                name="震源の深さ",
+                value=f"{hypocenter['depth']}Km",
+                inline=False
+            )
+
+            file = nextcord.File(
+                "earthquake2.png",
+                filename="earthquake2.png"
+            )
+
+            embed.set_image(
+                url="attachment://earthquake2.png"
+            )
+
+            embed.set_footer(
+                text=current_time
+            )
+
+            eew_channel = self.bot.get_channel(
+                int(config['eew_channel'])
+            )
+
+            await eew_channel.send(
+                embed=embed,
+                file=file
+            )
+
+            # 保存
+            await self.set_eew_id(current_id)
+
+        except Exception as e:
+            print(f"eew_info error: {e}")
+            
 
 def setup(bot):
     return bot.add_cog(earthquake(bot))
