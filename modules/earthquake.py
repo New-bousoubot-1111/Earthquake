@@ -405,48 +405,43 @@ class earthquake(commands.Cog):
     async def eew_info(self):
         try:
             request = requests.get(
-                "https://api.p2pquake.net/v2/history?codes=551&limit=1"
-            )
-
+            "https://api.p2pquake.net/v2/history?codes=551&limit=1"
+        )
             if request.status_code != 200:
                 return
-
             response = request.json()[0]
-
             current_id = str(response["id"])
-
             saved_id = await self.get_eew_id()
-
-            # 同じ地震なら送信しない
             if saved_id == current_id:
                 return
 
             data = response["earthquake"]
-
+    
             hypocenter = data["hypocenter"]
 
             points = response["points"]
 
-            latitude = hypocenter["latitude"]
-            longitude = hypocenter["longitude"]
+            latitude = hypocenter.get("latitude")
+            longitude = hypocenter.get("longitude")
 
-            # 地図生成
-            create_earthquake_map(
-                latitude,
-                longitude,
-                points
+            hypocenter_name = hypocenter.get("name")
+            magnitude = hypocenter.get("magnitude")
+            depth = hypocenter.get("depth")
+
+            unknown_hypocenter = (
+                hypocenter_name in [None, "", "不明"] or
+                magnitude in [-1, "-1", None] or
+                depth in [-1, "-1", None]
             )
 
-            # 津波
-            if points[0]["isArea"] is False:
-                isArea = "この地震による津波の心配はありません"
-            else:
-                isArea = (
-                    "この地震で津波が発生する可能性があります\n"
-                    "今後の情報に注意してください"
+            if not unknown_hypocenter:
+
+                create_earthquake_map(
+                    latitude,
+                    longitude,
+                    points
                 )
 
-            # 色
             max_scale = round(data["maxScale"] / 10)
 
             if max_scale <= 2:
@@ -477,61 +472,73 @@ class earthquake(commands.Cog):
                 japan_timezone
             ).strftime('%Y/%m/%d %H:%M')
 
-            embed = nextcord.Embed(
-                title="地震情報",
-                description=
-                f"{formatted_time}頃、"
-                f"最大震度**{max_scale}**の地震がありました。\n"
-                f"{isArea}",
-                color=embed_color
-            )
-
-            embed.add_field(
-                name="震源地",
-                value=str(hypocenter["name"]),
-                inline=False
-            )
-
-            embed.add_field(
-                name="マグニチュード",
-                value=str(hypocenter["magnitude"]),
-                inline=False
-            )
-
-            embed.add_field(
-                name="震源の深さ",
-                value=f"{hypocenter['depth']}Km",
-                inline=False
-            )
-
-            file = nextcord.File(
-                "earthquake2.png",
-                filename="earthquake2.png"
-            )
-
-            embed.set_image(
-                url="attachment://earthquake2.png"
-            )
-
+            if unknown_hypocenter:
+                embed = nextcord.Embed(
+                    title="地震情報",
+                    description=
+                    f"{formatted_time}頃、"
+                    f"最大震度**{max_scale}**を観測する地震がありました。\n"
+                    f"震源・津波については現在調査中です。",
+                    color=embed_color
+                )
+            else:
+                if points[0]["isArea"] is False:
+                    isArea = "この地震による津波の心配はありません"
+                else:
+                    isArea = (
+                        "この地震で津波が発生する可能性があります\n"
+                        "今後の情報に注意してください"
+                    )
+                embed = nextcord.Embed(
+                    title="地震情報",
+                    description=
+                    f"{formatted_time}頃、"
+                    f"最大震度**{max_scale}**の地震がありました。\n"
+                    f"{isArea}",
+                    color=embed_color
+                )
+                embed.add_field(
+                    name="震源地",
+                    value=str(hypocenter_name),
+                    inline=False
+                )
+                embed.add_field(
+                    name="マグニチュード",
+                    value=str(magnitude),
+                    inline=False
+                )
+                embed.add_field(
+                    name="震源の深さ",
+                    value=f"{depth}Km",
+                    inline=False
+                )
+                file = nextcord.File(
+                    "earthquake2.png",
+                    filename="earthquake2.png"
+                )
+                embed.set_image(
+                    url="attachment://earthquake2.png"
+                )
             embed.set_footer(
                 text=current_time
             )
-
             eew_channel = self.bot.get_channel(
                 int(config['eew_channel'])
             )
+            if unknown_hypocenter:
 
-            await eew_channel.send(
-                embed=embed,
-                file=file
-            )
-
-            # 保存
+                await eew_channel.send(
+                    embed=embed
+                )
+            else:
+                await eew_channel.send(
+                    embed=embed,
+                    file=file
+                )
             await self.set_eew_id(current_id)
 
         except Exception as e:
             print(f"eew_info error: {e}")
-            
 
 def setup(bot):
     return bot.add_cog(earthquake(bot))
