@@ -332,8 +332,10 @@ class earthquake(commands.Cog):
     async def on_ready(self):
         print(Fore.BLUE + "|earthquake    |" + Fore.RESET)
         await self.setup_db()
-        self.eew_check.start()
-        self.eew_info.start()
+        if not self.eew_check.is_running():
+           self.eew_check.start()
+        if not self.eew_info.is_running():
+           self.eew_info.start()
 
     @tasks.loop(seconds=2)
     async def eew_check(self):
