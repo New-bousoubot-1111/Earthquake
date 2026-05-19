@@ -65,7 +65,8 @@ class Tasks(commands.Cog):
 
   @commands.Cog.listener()
   async def on_ready(self):
-    self.eewReport.start()
+    if not self.eewReport.is_running():
+      self.eewReport.start()
 
   @tasks.loop(seconds=1)
   async def eewReport(self):
