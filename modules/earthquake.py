@@ -525,16 +525,16 @@ class earthquake(commands.Cog):
             embed.set_footer(
                 text=current_time
             )
-            eew_channel = self.bot.get_channel(
-                int(config['eew_channel'])
+            eew_channel2 = self.bot.get_channel(
+                int(config['eew_channel2'])
             )
             if unknown_hypocenter:
 
-                await eew_channel.send(
+                await eew_channel2.send(
                     embed=embed
                 )
             else:
-                await eew_channel.send(
+                await eew_channel2.send(
                     embed=embed,
                     file=file
                 )
