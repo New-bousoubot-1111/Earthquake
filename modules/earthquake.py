@@ -268,20 +268,21 @@ class earthquake(commands.Cog):
             """)
 
             print("PostgreSQL connected")
+            
 
     async def get_cache(self, key):
-
         async with self.pool.acquire() as conn:
-
             result = await conn.fetchrow(
                 "SELECT value FROM eew_cache WHERE key = $1",
                 key
             )
-
             if result:
-                return result["value"]
-
+                value = result["value"]
+                if isinstance(value, str):
+                    return json.loads(value)
+                return value
             return None
+        
 
     async def set_cache(self, key, value):
 
@@ -399,6 +400,8 @@ class earthquake(commands.Cog):
                     if image:
                         await util.eew_image(eew_channel)
                 await self.set_cache("cache", data)
+        except Exception as e:
+            print(f"eew_check error: {e}")
 
     #地震情報
     @tasks.loop(seconds=5)
