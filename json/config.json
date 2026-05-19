@@ -1,7 +1,7 @@
 {
   "color": "0x00ffee",
   "owners": [800255014463078462],
-  "modules": ["command","earthquake","owners","Tasks"],
+  "modules": ["command","earthquake","owners"],
   "errorlog": "1041001428170326138",
   "eew_channel": "1041004690378338375",
   "eew_channel2": "1316288751479033856"
