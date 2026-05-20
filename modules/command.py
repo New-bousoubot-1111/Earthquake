@@ -232,6 +232,21 @@ def create_earthquake_map(latitude, longitude, points):
 
     plt.close()
 
+def convert_scale(scale):
+
+    scale_table = {
+        10: "1",
+        20: "2",
+        30: "3",
+        40: "4",
+        45: "5弱",
+        50: "5強",
+        55: "6弱",
+        60: "6強",
+        70: "7"
+    }
+
+    return scale_table.get(scale, "不明")
 
 class command(commands.Cog):
 
@@ -274,6 +289,8 @@ class command(commands.Cog):
         latitude = hypocenter["latitude"]
         longitude = hypocenter["longitude"]
 
+        max_scale = convert_scale(data["maxScale"])
+
         # 地図生成
         create_earthquake_map(
             latitude,
@@ -295,7 +312,7 @@ class command(commands.Cog):
 
         embed.add_field(
             name="最大震度",
-            value=round(data["maxScale"] / 10),
+            value={max_scale},
             inline=False
         )
 
