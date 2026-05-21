@@ -291,6 +291,27 @@ class command(commands.Cog):
 
         max_scale = convert_scale(data["maxScale"])
 
+        if max_scale in ["1", "2"]:
+            embed_color = 0x6c757d
+
+        elif max_scale == "3":
+            embed_color = 0x28a745
+
+        elif max_scale == "4":
+            embed_color = 0xffc107
+
+        elif max_scale in ["5弱", "5強"]:
+            embed_color = 0xff7f00
+
+        elif max_scale in ["6弱", "6強"]:
+            embed_color = 0xdc3545
+
+        elif max_scale == "7":
+            embed_color = 0x6f42c1
+
+        else:
+            embed_color = 0x6c757d
+
         # 地図生成
         create_earthquake_map(
             latitude,
