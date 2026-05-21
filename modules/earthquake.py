@@ -418,8 +418,8 @@ class earthquake(commands.Cog):
                         if image:
                             await util.eew_image(eew_channel)
                         await self.set_cache("cache", data)
-                    except Exception as e:
-                        print(f"eew_check error: {e}")
+            except Exception as e:
+                print(f"eew_check error: {e}")
                 
 
     #地震情報
