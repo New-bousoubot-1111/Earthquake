@@ -416,10 +416,7 @@ class earthquake(commands.Cog):
                         if data['report_num'] == "1":
                             image = True
                         if image:
-                            try:
-                                await util.eew_image(eew_channel)
-                            except Exception as img_error:
-                                print(f"eew_image error: {img_error}")
+                            await util.eew_image(eew_channel)
                         await self.set_cache("cache", data)
                     except Exception as e:
                         print(f"eew_check error: {e}")
