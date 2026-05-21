@@ -265,6 +265,7 @@ class command(commands.Cog):
     )
     async def eew(self, ctx):
 
+        await ctx.response.defer()
         request = requests.get(
             "https://api.p2pquake.net/v2/history?codes=551&limit=1"
         )
@@ -364,7 +365,7 @@ class command(commands.Cog):
             url="attachment://earthquake.png"
         )
 
-        await ctx.send(
+        await ctx.followup.send(
             embed=embed,
             file=file
         )
@@ -375,8 +376,9 @@ class command(commands.Cog):
     @nextcord.slash_command(
         description="地震情報を表示します(文式)"
     )
-    async def eew2(self, ctx):
+    async def eew2(self, ctx):       
 
+        await ctx.response.defer()
         request = requests.get(
             "https://api.p2pquake.net/v2/history?codes=551&limit=1"
         )
@@ -493,7 +495,7 @@ class command(commands.Cog):
             color=color
         )
 
-        await ctx.send(
+        await ctx.followup.send(
             embed=embed,
             view=util.help_page(embed, embed2)
         )
