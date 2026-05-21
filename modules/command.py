@@ -333,7 +333,7 @@ class command(commands.Cog):
 
         embed.add_field(
             name="最大震度",
-            value={max_scale},
+            value=max_scale,
             inline=False
         )
 
@@ -420,7 +420,7 @@ class command(commands.Cog):
             ),
             value=(
                 f"最大震度は"
-                f"**{round(data['maxScale']/10)}**、"
+                f"**{convert_scale(data['maxScale'])}**、"
                 f"震源の深さは"
                 f"**{hypocenter['depth']}Km**、"
                 f"マグニチュードは"
